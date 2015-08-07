@@ -3,6 +3,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -24,24 +25,29 @@ public class MainUI {
     static boolean j = false; //boolean to find if arrayList is past the first index
     static NaiveSolution ns = new NaiveSolution();
     static ParallelUI sa = new ParallelUI(); //sa variable stands for sum all...
-    static ParallelSolution ps; //ps variable stands for parallel solution... 
+    static ParallelSolution ps; //ps variable stands for parallel solution...
+    static long startTime = 0;
+    
+    
+    private static void tick(){
+	startTime = System.currentTimeMillis();
+    }
+    private static float tock(){
+	return (System.currentTimeMillis() - startTime) / 1000.0f; 
+    }
     
     public static void main (String[] args){
         //args[0].split(" "); //takes in command line parameters:...
+        //<data file name> <filter size (must be an odd integer >= 3)> <output file name>
         System.out.println("Please enter the name of the text file");
         Scanner sc = new Scanner(System.in);
         String file = sc.next();
-        //String file = sc.toString();
         try {
             load(file);
-            //debugPrint(intArrayIndex, intArrayValue);
-            //try{
                 ns.naiveMethod(intArrayValue, filterSize);
                 sa.parallelStart(intArrayValue, filterSize);
                 //debugPrintAll(intArrayIndex, intArrayValue, ns.intArrayValues2, ps.getList());
-            //}catch(Exception e){
-            //    System.out.println("Failed to compute");
-            ///}
+                filePrintAll(intArrayIndex, intArrayValue, ns.intArrayValues2, ps.getList());
             
         } catch (IOException ex) {
             Logger.getLogger(NaiveSolution.class.getName()).log(Level.SEVERE, null, ex);
@@ -55,23 +61,16 @@ public class MainUI {
         //Eg. "/home/g/gmdnko003/NetBeansProjects/HashingAssignment/src/lexicon.txt"
         System.out.println(path);
         int index = 0;
-        
-//        try (FileReader fileReader = new FileReader(path)) {
-//            
-//        }
             FileReader fileReader = new FileReader(path);
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             String inputLine; //each line in the text file
             lineList = new ArrayList<String>(); //each line including the word, word type and defintion is an array element
             while ((inputLine = bufferedReader.readLine()) != null) {
-                //System.out.println(inputLine);
                 lineList.add(inputLine); //now we have an ArrayList of data inputs
                 if (j==true){
                     String[] stringArray = inputLine.split(" ");
                     intArrayIndex[index] = Integer.parseInt(stringArray[0]);
-                    //System.out.println(stringArray[0]); //line number
                     intArrayValue[index] = Float.parseFloat(stringArray[1]);
-                    //System.out.println(stringArray[1]); //floating point value
                     index++;
                 }
                 else{
@@ -81,22 +80,12 @@ public class MainUI {
                     intArrayIndex = new int[Integer.parseInt(inputLine)];
                 }
                 j= true;
-                
-                //intArrayIndex.add(Integer.parseInt(stringArray[0])); //add text file index
-                //intArrayValue.add(Integer.parseInt(stringArray[1]));
             }
             ns.noOfItems = Integer.parseInt(lineList.get(0));
             ps.noOfItems = Integer.parseInt(lineList.get(0));
             System.out.println(lineList.get(0));
-        
-//        catch(Exception e){
-//            System.out.println("File not found!");
-//        }
     }
-    
-    /*
-        this method will debug print the solution naive array and the solution parallel array
-    */
+
     public static void debugPrintAll(int[] originalArrayIndexes,float[] originalArray, float[] naiveArray, float[] parallelArray){
         System.out.println("Debug printing...");
         for (int i=0; i<originalArray.length; i++){
@@ -111,7 +100,15 @@ public class MainUI {
         }
     }
     
-    public static void filePrintAll(int[] originalArrayIndexes,float[] originalArray, float[] naiveArray, float[] parallelArray){
-        
+    public static void filePrintAll(int[] originalArrayIndexes,float[] originalArray, float[] naiveArray, float[] parallelArray) throws IOException{
+        PrintWriter writer = new PrintWriter("OutputFile", "UTF-8");
+        writer.println("Output results for parallel and naive solutions...");
+        writer.printf("%-22s%-22s%-22s%s\n","Index","OriginalArray","SerialArray","ParallelArray");
+        writer.println("");
+        for (int i=0; i<originalArray.length; i++){
+            writer.printf("%-22s%-22s%-22s%s\n",originalArrayIndexes[i]+" : ",originalArray[i],naiveArray[i],parallelArray[i]);
+            writer.println("");
+        }
+        writer.close();
     }
 }
