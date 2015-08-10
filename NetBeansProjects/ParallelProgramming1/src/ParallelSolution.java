@@ -1,79 +1,75 @@
-
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RecursiveTask;
-
-
-//package parallelization1;
+import java.util.Arrays;
+import java.util.concurrent.RecursiveAction;
 
 /**
  *
- * @author Nkosingiphile
+ * @author gmdnko003
  */
-public class ParallelSolution extends RecursiveTask<Integer> {
-    static long startTime = 0;
+public class ParallelSolution extends RecursiveAction  {
     int lo; // arguments
     int hi;
-    static final int SEQUENTIAL_CUTOFF=500;
-    static float[] arr;
-	
-    private static void tick(){
-	startTime = System.currentTimeMillis();
-    }
+    float[] arr;
+    static int SEQUENTIAL_CUTOFF = 9999;
+    MainUI mi = new MainUI();
+          
+    static float[] intArrayValues2; //the new array of integer values with median filtering applied
+    static int noOfItems; //the number of items in the text file
+    int filterSize; //ie. 3
+    int median;
+    int immutables;
     
-    private static float toc(){
-	return (System.currentTimeMillis() - startTime) / 1000.0f; 
-    }
     
-    static final ForkJoinPool fjPool = new ForkJoinPool();
-    
-    static int sum(float[] arr){
-        return fjPool.invoke(new ParallelSolution(arr,0,arr.length));
-    }
-    
-
     int ans = 0; // result 
 	    
-    ParallelSolution(float[] a, int l, int h) { 
-	lo=l; hi=h; arr=a;  
-    }
-    
-    public static void parallelMethod(float[] list, int filterNo) {
-	tick();
-        arr = list;
-	int ParallelSolution = sum(list);
-	float time = toc();
-	System.out.println("Run took "+ time +" seconds");
-		
-	System.out.println("Sum is:");
-	tick();
-	sumArr = sum(arr);
-	time = toc();
-	System.out.println("Second run took "+ time +" seconds");
-		
-	System.out.println("Sum is:");
-	System.out.println(sumArr);
-		
+    ParallelSolution(float[] a, int l, int h, int filterNo) {      
+        lo=l; hi=h; arr=a; filterSize = filterNo;
     }
 
 
-    protected Integer compute(){// return answer - instead of run
-	if((hi-lo) < SEQUENTIAL_CUTOFF) {
-            int ans = 0;
-	    for(int i=lo; i < hi; i++)
-		ans += arr[i];
-		return ans;
+    protected void compute(){// return answer - instead of run
+        //SEQUENTIAL_CUTOFF = arr.length*(1/200);
+        if((hi-lo) < SEQUENTIAL_CUTOFF) { //the size of the array
+        //list is the full list of integer values
+            immutables = (filterSize/2); //the number of variables that will no change given their filters
+            median = (filterSize/2); //the median value
+            //System.out.println("Computing from array index: "+lo+" to "+hi); 
+            //System.out.println("Filter size: "+filterSize+" Median: "+median+" Immutables: "+immutables);
+//            for (int i = 0; i < arr.length; i++){
+//                System.out.println(arr[i]);
+//            }
+            for (int i=lo; i<hi; i++){ //for each iteration in the given array & condition to apply median filtering
+                if (i < immutables){
+                    intArrayValues2[i] = arr[i];
+                }
+                else if (i >= arr.length-immutables){
+                    intArrayValues2[i] = arr[i];
+                }
+                else{
+                    float[] filter = new float[filterSize]; //new interger array of filterable elements 
+                    int j = -immutables;
+                    for (int k=0; k<filterSize; k++){
+                        filter[k] = arr[i+j];
+                        j++;
+                        //System.out.println(filter[j]); //prints out each element in the unsorted filter array
+                    }
+                    Arrays.sort(filter);
+                    intArrayValues2[i] = (filter[median]); //-1 to get the array index 
+                }
+            }           
         }
-	else{
-		    	
-            ParallelSolution left = new ParallelSolution(arr,lo,(hi+lo)/2);
-            ParallelSolution right= new ParallelSolution(arr,(hi+lo)/2,hi);
-		    		// order of next 4 lines
-		    		// essential Ð why?          
-            left.fork();
-            int rightAns = right.compute();
-            int leftAns  = left.join(); 
-            return leftAns + rightAns;	     
-		     
-	}
+        else {	    	
+            ParallelSolution left = new ParallelSolution(arr,lo,(hi+lo)/2,filterSize);
+            ParallelSolution right= new ParallelSolution(arr,(hi+lo)/2,hi,filterSize);
+            
+            left.fork(); //
+            right.compute();
+            left.join(); 
+            //return ans; 
+        }
+        
     }
+    public static float[] getList(){
+            return intArrayValues2;
+    }
+     
 }
